@@ -1,6 +1,6 @@
 // @id = ch.viaccoz.winbiztobanana.import.winbiz.transactions
 // @api = 1.0
-// @pubdate = 2023-12-02
+// @pubdate = 2023-12-03
 // @publisher = Thierry Viaccoz
 // @description = Winbiz - Import transactions (*.csv)
 // @description.fr = Winbiz - Importer écritures comptables (*.csv)
