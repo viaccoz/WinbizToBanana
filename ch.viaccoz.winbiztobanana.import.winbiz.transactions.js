@@ -15,18 +15,18 @@
 function exec(inputText) {
 	const inputArray = Banana.Converter.csvToArray(inputText, ';', '"');
 	const outputArray = [];
-	const multiple = 'Multiple';
+	const multiple = 'multiple'.toLowerCase();
 
 	for (const inputRow of inputArray) {
-		const date = Banana.Converter.toInternalDateFormat(inputRow[4], 'dd.mm.yyyy');
-		const doc = inputRow[2];
-		const description = inputRow[6];
-		const accountDebit = inputRow[7];
-		const accountCredit = inputRow[8];
-		const amount = inputRow[9];
+		const date = Banana.Converter.toInternalDateFormat(inputRow[4].trim(), 'dd.mm.yyyy');
+		const doc = inputRow[2].trim();
+		const description = inputRow[6].trim();
+		const accountDebit = inputRow[7].trim();
+		const accountCredit = inputRow[8].trim();
+		const amount = inputRow[9].trim();
 
 		// Delete grouped transactions
-		if (accountDebit === multiple || accountCredit === multiple) {
+		if (accountDebit.toLowerCase() === multiple || accountCredit.toLowerCase() === multiple) {
 			continue;
 		}
 
