@@ -2,6 +2,8 @@
 
 Instructions pour migrer les données du logiciel de comptabilité [Winbiz](https://www.winbiz.ch/) vers [Banana](https://www.banana.ch/).
 
+Celle-ci peut se faire au moyen de fichiers CSV exporter depuis Winbiz, ou alors des fichiers plan.dbf (plan comptable) et ecriture.dbf (écritures comptables) dans le dossier de données Winbiz.
+
 # Exporter de Winbiz
 
 ## Exporter le plan comptable
@@ -55,7 +57,7 @@ Instructions pour migrer les données du logiciel de comptabilité [Winbiz](http
 1. Choisir le type
 	* Importer : Comptes
 1. Choisir l'extension
-	* Winbiz - Importer plan comptable (*.csv)
+	* Winbiz - Importer plan comptable (*.csv plan.dbf)
 1. Importer
 	* Choisir le fichier → OK → OK → cocher "Ne pas aviser" → OK
 
@@ -71,6 +73,6 @@ Instructions pour migrer les données du logiciel de comptabilité [Winbiz](http
 1. Choisir le type
 	* Importer : Écritures
 1. Choisir l'extension
-	* Winbiz - Importer écritures comptables (*.csv)
+	* Winbiz - Importer écritures comptables (*.csv ecriture.dbf)
 1. Importer
 	* Choisir le fichier → OK → OK
