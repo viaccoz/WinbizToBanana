@@ -36,8 +36,10 @@ function parseWinbizInput(input) {
 	if (input.startsWith(String.fromCharCode(3) + String.fromCharCode(23))) {
 		// Winbiz database (*.dbf) according to file marker
 
-		// Only keep data after \r
-		const inputData = input.substring(input.indexOf('\r') + 1);
+		// Only keep data after the start marker (\r) and before the end marker (0x1A)
+		const beginMarker = input.indexOf('\r');
+		const endMarker = input.indexOf(String.fromCharCode(26), beginMarker);
+		const inputData = input.substring(beginMarker + 1, endMarker);
 
 		// Split in rows
 		let rowLength = 0;
