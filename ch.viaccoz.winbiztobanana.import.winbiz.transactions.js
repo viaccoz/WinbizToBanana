@@ -1,18 +1,19 @@
 // @id = ch.viaccoz.winbiztobanana.import.winbiz.transactions
 // @api = 1.0
-// @pubdate = 2023-12-03
+// @pubdate = 2023-12-06
 // @publisher = Thierry Viaccoz
-// @description = Winbiz - Import transactions (*.csv *.dbf)
-// @description.fr = Winbiz - Importer écritures comptables (*.csv *.dbf)
+// @description = Winbiz - Import transactions (*.csv ecriture.dbf)
+// @description.fr = Winbiz - Importer écritures comptables (*.csv ecriture.dbf)
 // @doctype = *
 // @docproperties =
 // @task = import.transactions
 // @inputdatasource = openfiledialog
 // @inputencoding = latin1
-// @inputfilefilter = Comma separated files (*.csv);;Winbiz database files (*.dbf);;All files (*.*)
-// @inputfilefilter.fr = Fichiers délimités par des virgules (*.csv);;Fichiers base de données Winbiz (*.dbf);;Tous les fichiers (*.*)
+// @inputfilefilter = Comma separated files (*.csv);;Winbiz database files (ecriture.dbf);;All files (*.*)
+// @inputfilefilter.fr = Fichiers délimités par des virgules (*.csv);;Fichiers base de données Winbiz (ecriture.dbf);;Tous les fichiers (*.*)
 
-const fields = new Map([
+const MULTIPLE = 'multiple'.toLowerCase();
+const FIELDS = new Map([
 		['MULTIPLE'      ,{id:  0, length:   2}],
 		['ECR_NUMERO'    ,{id:  1, length:  10}],
 		['NUMERO'        ,{id:  2, length:  10}],
@@ -31,32 +32,36 @@ const fields = new Map([
 		['MISCELLANEOUS' ,{id: 15, length: 174}],
 ]);
 
+function parseWinbizInput(input) {
+	if (input.startsWith(String.fromCharCode(3) + String.fromCharCode(23))) {
+		// Winbiz database (*.dbf) according to file marker
+
+		// Only keep data after \r
+		const inputData = input.substring(input.indexOf('\r') + 1);
+
+		// Split in rows
+		let rowLength = 0;
+		FIELDS.forEach((value, key) => rowLength += value.length);
+		const inputDataByRow = inputData.replace(new RegExp(`.{${rowLength}}`, 'g'), '$&\n');
+
+		// Return array
+		const fieldLengths = Array.from(FIELDS.values()).map(value => value.length);
+		return { array: Banana.Converter.flvToArray(inputDataByRow, fieldLengths), isWinbizDatabase: true };
+	} else {
+		// Winbiz comma separated file (*.csv)
+		return { array: Banana.Converter.csvToArray(input, ';', '"'), isWinbizDatabase: false };
+	}
+}
+
 function getValue(array, fieldName) {
-	return array[fields.get(fieldName).id].trim();
+	return array[FIELDS.get(fieldName).id].trim();
 }
 
 function exec(inputText) {
-	let dateFormat = '';
-	let inputArray = '';
+	const parsedWinbizInput = parseWinbizInput(inputText);
+	const inputArray = parsedWinbizInput.array;
 	const outputArray = [];
-	const multiple = 'multiple'.toLowerCase();
-
-	const fieldLengths = [];
-	for (const field of fields.values()) {
-		fieldLengths.push(field.length);
-	}
-
-	if (inputText.startsWith(String.fromCharCode(3) + String.fromCharCode(23))) {
-		// Winbiz database files (*.dbf)
-		dateFormat = 'yyyymmdd';
-		const inputTextData = inputText.substring(inputText.indexOf('\r') + 1);
-		const inputTextDataByLine = inputTextData.replace(/.{415}/g, '$&\n');
-		inputArray = Banana.Converter.flvToArray(inputTextDataByLine, fieldLengths);
-	} else {
-		// Comma separated files (*.csv)
-		dateFormat = 'dd.mm.yyyy';
-		inputArray = Banana.Converter.csvToArray(inputText, ';', '"');
-	}
+	let dateFormat = parsedWinbizInput.isWinbizDatabase ? 'yyyymmdd' : 'dd.mm.yyyy';
 
 	for (const inputRow of inputArray) {
 		const date = Banana.Converter.toInternalDateFormat(getValue(inputRow, 'DATE'), dateFormat);
@@ -67,7 +72,7 @@ function exec(inputText) {
 		const amount =        getValue(inputRow, 'MONTANT');
 
 		// Delete grouped transactions
-		if (accountDebit.toLowerCase() === multiple || accountCredit.toLowerCase() === multiple) {
+		if (accountDebit.toLowerCase() === MULTIPLE || accountCredit.toLowerCase() === MULTIPLE) {
 			continue;
 		}
 
