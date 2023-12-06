@@ -1,6 +1,6 @@
 // @id = ch.viaccoz.winbiztobanana.import.winbiz.accounts
 // @api = 1.0
-// @pubdate = 2023-12-05
+// @pubdate = 2023-12-06
 // @publisher = Thierry Viaccoz
 // @description = Winbiz - Import accounts (*.csv plan.dbf)
 // @description.fr = Winbiz - Importer plan comptable (*.csv plan.dbf)
@@ -34,10 +34,10 @@ function parseWinbizInput(input) {
 
 		// Return array
 		const fieldLengths = Array.from(FIELDS.values()).map(value => value.length);
-		return Banana.Converter.flvToArray(inputDataByRow, fieldLengths);
+		return { array: Banana.Converter.flvToArray(inputDataByRow, fieldLengths), isWinbizDatabase: true };
 	} else {
 		// Winbiz comma separated file (*.csv)
-		return Banana.Converter.csvToArray(input, ';', '"');
+		return { array: Banana.Converter.csvToArray(input, ';', '"'), isWinbizDatabase: false };
 	}
 }
 
@@ -71,7 +71,7 @@ function getEmptyLine() {
 }
 
 function exec(inputText) {
-	const inputArray = parseWinbizInput(inputText);
+	const inputArray = parseWinbizInput(inputText).array;
 	const outputArray = [];
 	const activeGroups = {};
 	let emptyLineToAddForPreviousGroup = false;
