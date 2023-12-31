@@ -7,6 +7,13 @@
 // @doctype = *
 // @docproperties =
 // @task = app.command
+// @timeout = 5000
+
+const MAXIMUM_NUMBER_OF_ROWS = 20;
+
+function removeEnd(input) {
+	return input.substr(0, input.lastIndexOf(' ')).trim();
+}
 
 function exec() {
 	// Check that current row is in transactions table
@@ -19,7 +26,7 @@ function exec() {
 	// Prepare start and stop
 	let start = Banana.document.cursor.selectionTop;
 	let stop = Banana.document.cursor.selectionBottom;
-	if (start === 0 && stop > Math.pow(2, 31) - 2) {
+	if (stop - start + 1 > MAXIMUM_NUMBER_OF_ROWS) {
 		start = Banana.document.cursor.rowNr;
 		stop = Banana.document.cursor.rowNr;
 	}
@@ -27,19 +34,35 @@ function exec() {
 	// Iterate over all selected rows
 	let rowChange = '';
 	for (let i = start; i <= stop; i++) {
-		const currentRowDescription = transactionsTable.value(i, 'Description');
+		let currentRowDescription = transactionsTable.value(i, 'Description');
 		const similarRows = transactionsTable.findRows(function(rowObj, rowNr, table) {
-			return rowObj.value('Description').includes(currentRowDescription);
+			let rowObjDescription = rowObj.value('Description');
+			do {
+				if (rowObjDescription.startsWith(currentRowDescription) && rowNr !== i) {
+					return true;
+				}
+				rowObjDescription = removeEnd(rowObjDescription);
+				currentRowDescription = removeEnd(currentRowDescription);
+			} while (rowObjDescription.length > 0 && currentRowDescription.length > 0);
+			return false;
 		});
 
 		if (similarRows.length > 0) {
-			const firstSimilarRow = similarRows[0];
+			let longestSimilarRowLength = -1;
+			let longestSimilarRowIndex = -1;
+			for (let j = 0; j < similarRows.length; j++) {
+				const currentSimilarRowLength = similarRows[j].value('Description').length;
+				if (currentSimilarRowLength > longestSimilarRowLength) {
+					longestSimilarRowLength = currentSimilarRowLength;
+					longestSimilarRowIndex = j;
+				}
+			}
+			const similarRow = similarRows[longestSimilarRowIndex];
 			rowChange += `{
 				"fields": {
-					"Date": "` + firstSimilarRow.value('Date') + `",
-					"AccountDebit": "` + firstSimilarRow.value('AccountDebit') + `",
-					"AccountCredit": "` + firstSimilarRow.value('AccountCredit') + `",
-					"Amount": "` + firstSimilarRow.value('Amount') + `"
+					"AccountDebit": "` + similarRow.value('AccountDebit') + `",
+					"AccountCredit": "` + similarRow.value('AccountCredit') + `",
+					"Amount": "` + similarRow.value('Amount') + `"
 				},
 				"operation": {
 					"name": "modify",
