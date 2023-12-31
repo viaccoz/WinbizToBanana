@@ -16,18 +16,6 @@ function exec() {
 		return null;
 	}
 
-	// Start change
-	let strChange = `{
-		"format": "documentChange",
-		"error": "",
-		"data": [ {
-			"document": {
-				"dataUnits": [ {
-					"nameXml": "Transactions",
-					"data": {
-						"rowLists": [ {
-							"rows": [`;
-
 	// Prepare start and stop
 	let start = Banana.document.cursor.selectionTop;
 	let stop = Banana.document.cursor.selectionBottom;
@@ -37,19 +25,21 @@ function exec() {
 	}
 
 	// Iterate over all selected rows
-	let rowChanged = false;
+	let rowChange = '';
 	for (let i = start; i <= stop; i++) {
 		const currentRowDescription = transactionsTable.value(i, 'Description');
-		const similarRow = transactionsTable.findRowByValue('Description', currentRowDescription);
-		if (similarRow && similarRow.rowNr !== i) {
-			Banana.application.addMessage(similarRow.value('Amount'));
-			rowChanged = true;
-			strChange += `{
+		const similarRows = transactionsTable.findRows(function(rowObj, rowNr, table) {
+			return rowObj.value('Description').includes(currentRowDescription);
+		});
+
+		if (similarRows.length > 0) {
+			const firstSimilarRow = similarRows[0];
+			rowChange += `{
 				"fields": {
-					"Date": "` + similarRow.value('Date') + `",
-					"AccountDebit": "` + similarRow.value('AccountDebit') + `",
-					"AccountCredit": "` + similarRow.value('AccountCredit') + `",
-					"Amount": "` + similarRow.value('Amount') + `"
+					"Date": "` + firstSimilarRow.value('Date') + `",
+					"AccountDebit": "` + firstSimilarRow.value('AccountDebit') + `",
+					"AccountCredit": "` + firstSimilarRow.value('AccountCredit') + `",
+					"Amount": "` + firstSimilarRow.value('Amount') + `"
 				},
 				"operation": {
 					"name": "modify",
@@ -59,13 +49,16 @@ function exec() {
 		}
 	}
 
-	// Remove last comma if needed
-	if (rowChanged) {
-		strChange = strChange.slice(0, -1);
-	}
-
-	// Finish change
-	strChange += `			]
+	const strChange = `{
+		"format": "documentChange",
+		"error": "",
+		"data": [ {
+			"document": {
+				"dataUnits": [ {
+					"nameXml": "Transactions",
+					"data": {
+						"rowLists": [ {
+							"rows": [` + rowChange.slice(0, -1) + `]
 						} ]
 					}
 				} ]
